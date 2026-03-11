@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CAPA Session Planning Poll (Q1–Q5)</title>
+  <style>
+    :root {
+      --bg: #f5f7fb;
+      --card: #ffffff;
+      --text: #17324d;
+      --muted: #61758a;
+      --border: #d9e2ec;
+      --primary: #2d6298;
+      --primary-dark: #1f4e79;
+      --light: #eef4fb;
+      --success-bg: #edf8f0;
+      --success: #1f7a42;
+      --warning-bg: #fff4e8;
+      --warning: #b35b00;
+      --danger: #b42318;
+      --shadow: 0 10px 28px rgba(16, 24, 40, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    .wrap {
+      max-width: 1220px;
+      margin: 0 auto;
+      padding: 28px 18px 40px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .header h1 {
+      margin: 0 0 8px;
+      font-size: 32px;
+      line-height: 1.2;
+      color: var(--primary-dark);
+    }
+
+    .header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    .session-grid {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    @media (max-width: 1180px) {
+      .session-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 760px) {
+      .session-grid { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+      .header h1 { font-size: 26px; }
+    }
+
+    .session-card {
+      background: var(--card);
+      border: 2px solid var(--border);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      padding: 18px 16px 16px;
+      display: flex;
+      flex-direction: column;
+      min-height: 295px;
+      transition: transform 0.16s ease, border-color 0.16s ease;
+    }
+
+    .session-card:hover {
+      transform: translateY(-2px);
+      border-color: #c7d6e6;
+    }
+
+    .session-card.claimed {
+      background: #fbfcfe;
+      border-color: #e4e9ef;
+    }
+
+    .session-id {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      background: var(--light);
+      color: var(--primary-dark);
+      font-weight: 700;
+      font-size: 22px;
+      margin-bottom: 14px;
+    }
+
+    .session-time {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 10px;
+      line-height: 1.35;
+      min-height: 40px;
+    }
+
+    .session-topic {
+      font-size: 17px;
+      font-weight: 700;
+      line-height: 1.45;
+      color: var(--text);
+      min-height: 110px;
+      margin-bottom: 14px;
+    }
+
+    .status-row {
+      margin-top: auto;
+      margin-bottom: 12px;
+      min-height: 56px;
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .available {
+      background: var(--success-bg);
+      color: var(--success);
+    }
+
+    .claimed-badge {
+      background: var(--warning-bg);
+      color: var(--warning);
+    }
+
+    .claimed-by {
+      margin-top: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: var(--muted);
+    }
+
+    .claim-btn {
+      width: 100%;
+      border: none;
+      border-radius: 14px;
+      padding: 13px 14px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .claim-btn:hover {
+      background: #255781;
+    }
+
+    .claim-btn:disabled {
+      background: #c8d3df;
+      color: #fff;
+      cursor: not-allowed;
+    }
+
+    .message {
+      margin: 0 auto 18px;
+      max-width: 850px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      font-size: 14px;
+      line-height: 1.6;
+      display: none;
+      text-align: center;
+    }
+
+    .message.show { display: block; }
+    .message.ok { background: var(--success-bg); color: var(--success); }
+    .message.err { background: #fff3f2; color: var(--danger); }
+    .message.info { background: #eef4fb; color: var(--primary-dark); }
+
+    .results-panel {
+      margin-top: 28px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+    }
+
+    .results-panel h2 {
+      margin: 0 0 8px;
+      font-size: 20px;
+      color: var(--primary-dark);
+    }
+
+    .results-panel p {
+      margin: 0 0 14px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .result-item {
+      padding: 12px 0;
+      border-top: 1px solid #edf2f7;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .result-item:first-of-type {
+      border-top: none;
+    }
+
+    .small {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.52);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 1000;
+    }
+
+    .modal-backdrop.show {
+      display: flex;
+    }
+
+    .modal {
+      width: 100%;
+      max-width: 560px;
+      background: #fff;
+      border-radius: 24px;
+      box-shadow: 0 18px 60px rgba(15, 23, 42, 0.22);
+      overflow: hidden;
+    }
+
+    .modal-header {
+      padding: 22px 24px 12px;
+      border-bottom: 1px solid #edf2f7;
+    }
+
+    .modal-header h3 {
+      margin: 0;
+      font-size: 24px;
+      color: var(--primary-dark);
+      line-height: 1.25;
+    }
+
+    .modal-header .mini {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.6;
+      font-weight: 700;
+    }
+
+    .modal-body {
+      padding: 22px 24px 24px;
+    }
+
+    .step-title {
+      font-size: 20px;
+      font-weight: 700;
+      margin: 0 0 8px;
+    }
+
+    .step-desc {
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    .topic-strong-line {
+      font-size: 18px;
+      line-height: 1.55;
+      color: var(--text);
+      font-weight: 700;
+      margin: 0 0 20px;
+    }
+
+    .field {
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: var(--text);
+    }
+
+    input[type="text"], textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 13px;
+      font-size: 15px;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--text);
+      background: #fff;
+    }
+
+    textarea {
+      min-height: 140px;
+      resize: vertical;
+      line-height: 1.55;
+    }
+
+    .choice-group {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin: 10px 0 18px;
+    }
+
+    .choice-option {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      cursor: pointer;
+      background: #fff;
+    }
+
+    .choice-option input {
+      margin-top: 3px;
+      transform: scale(1.15);
+    }
+
+    .choice-option strong {
+      display: block;
+      margin-bottom: 2px;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 14px;
+      padding: 12px 18px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #255781;
+    }
+
+    .btn-light {
+      background: #eef4fb;
+      color: var(--primary-dark);
+    }
+
+    .hidden {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="header">
+      <h1>CAPA Research &amp; Scholarship Committee<br>Session Planning Poll (Q1–Q5)</h1>
+      <p>Please click one session to claim it. Each committee member may claim only one session.</p>
+    </div>
+
+    <div id="message" class="message info"></div>
+
+    <div id="sessionGrid" class="session-grid"></div>
+
+    <div class="results-panel">
+      <h2>Current Results</h2>
+      <p>Claimed sessions and submitted topic suggestions.</p>
+      <div id="resultsList"></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="modalBackdrop">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalSessionTitle">Claim this session</h3>
+        <div class="mini" id="modalSessionMeta"></div>
+      </div>
+      <div class="modal-body">
+        <div id="step1">
+          <div class="step-title">Claim this session</div>
+          <p class="step-desc">Please enter your name to claim this session.</p>
+          <div class="field">
+            <label for="claimName">Your name</label>
+            <input id="claimName" type="text" placeholder="Enter your name" />
+          </div>
+          <div class="modal-actions">
+            <button class="btn btn-light" id="cancelStep1">Cancel</button>
+            <button class="btn btn-primary" id="nextStepBtn">Next</button>
+          </div>
+        </div>
+
+        <div id="step2" class="hidden">
+          <div class="step-title">Confirm topic</div>
+          <p class="topic-strong-line" id="step2TopicLine"></p>
+
+          <div class="choice-group">
+            <label class="choice-option">
+              <input type="radio" name="topicChoice" id="agreeTopicRadio" value="agree" checked />
+              <span>
+                <strong>Agree with the proposed topic</strong>
+                then submit
+              </span>
+            </label>
+
+            <label class="choice-option">
+              <input type="radio" name="topicChoice" id="proposeTopicRadio" value="propose" />
+              <span>
+                <strong>Would like to propose another topic</strong>
+                enter proposed topic, then submit
+              </span>
+            </label>
+          </div>
+
+          <div class="field hidden" id="proposedTopicField">
+            <label for="claimComment">Proposed topic</label>
+            <textarea id="claimComment" placeholder="Enter your proposed topic"></textarea>
+          </div>
+
+          <div class="modal-actions">
+            <button class="btn btn-light" id="backStepBtn">Back</button>
+            <button class="btn btn-primary" id="submitClaimBtn">Submit</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'https://script.google.com/macros/s/AKfycbzpTYLRNB1CA2ghzUkFvWN6MlW08-0zXJdDCdka6ouS385kq_SLV5cc_6MPPxTJMSKC/exec';
+
+    const sessions = [
+      { id: 'Q1', time: 'Sep–Dec 2026', topic: 'Identifying publishable cases and developing impactful case reports' },
+      { id: 'Q2', time: 'Jan–Mar 2027', topic: 'IRB and regulatory considerations for clinical research' },
+      { id: 'Q3', time: 'Apr–Jun 2027', topic: 'Developing a publishable pathology manuscript: structure, figures, and journal strategy' },
+      { id: 'Q4', time: 'Jul–Sep 2027', topic: 'Designing high-quality case series in pathology research' },
+      { id: 'Q5', time: 'Oct–Dec 2027', topic: 'Roundtable discussion: practical experiences and lessons learned from previous sessions' }
+    ];
+
+    const sessionGrid = document.getElementById('sessionGrid');
+    const resultsList = document.getElementById('resultsList');
+    const messageEl = document.getElementById('message');
+
+    const modalBackdrop = document.getElementById('modalBackdrop');
+    const modalSessionTitle = document.getElementById('modalSessionTitle');
+    const modalSessionMeta = document.getElementById('modalSessionMeta');
+    const step1 = document.getElementById('step1');
+    const step2 = document.getElementById('step2');
+    const step2TopicLine = document.getElementById('step2TopicLine');
+    const claimName = document.getElementById('claimName');
+    const claimComment = document.getElementById('claimComment');
+    const agreeTopicRadio = document.getElementById('agreeTopicRadio');
+    const proposeTopicRadio = document.getElementById('proposeTopicRadio');
+    const proposedTopicField = document.getElementById('proposedTopicField');
+    const cancelStep1 = document.getElementById('cancelStep1');
+    const nextStepBtn = document.getElementById('nextStepBtn');
+    const backStepBtn = document.getElementById('backStepBtn');
+    const submitClaimBtn = document.getElementById('submitClaimBtn');
+
+    let activeSession = null;
+
+    function showMessage(text, type = 'info') {
+      messageEl.textContent = text;
+      messageEl.className = `message show ${type}`;
+    }
+
+    function clearMessage() {
+      messageEl.textContent = '';
+      messageEl.className = 'message info';
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.innerText = text || '';
+      return div.innerHTML;
+    }
+
+    function openModal(session) {
+      activeSession = session;
+      modalSessionTitle.textContent = `Claim ${session.id}`;
+      modalSessionMeta.innerHTML = `<strong>${session.time} · ${session.topic}</strong>`;
+      step2TopicLine.innerHTML = `<strong>${session.time} · ${session.topic}</strong>`;
+      claimName.value = '';
+      claimComment.value = '';
+      agreeTopicRadio.checked = true;
+      proposeTopicRadio.checked = false;
+      proposedTopicField.classList.add('hidden');
+      step1.classList.remove('hidden');
+      step2.classList.add('hidden');
+      modalBackdrop.classList.add('show');
+      setTimeout(() => claimName.focus(), 80);
+    }
+
+    function closeModal() {
+      activeSession = null;
+      modalBackdrop.classList.remove('show');
+    }
+
+    async function fetchClaims() {
+      try {
+        const res = await fetch(`${API_URL}?action=list`, { method: 'GET' });
+        const data = await res.json();
+        if (!data.success) {
+          showMessage(data.message || 'Unable to load claims.', 'err');
+          return [];
+        }
+        return data.claims || [];
+      } catch (err) {
+        showMessage('Unable to connect to the online data source.', 'err');
+        return [];
+      }
+    }
+
+    function renderCards(claims) {
+      const map = new Map(claims.map(x => [x.session_id, x]));
+      sessionGrid.innerHTML = '';
+
+      sessions.forEach(session => {
+        const claim = map.get(session.id);
+        const card = document.createElement('div');
+        card.className = `session-card ${claim ? 'claimed' : ''}`;
+        card.innerHTML = `
+          <div class="session-id">${session.id}</div>
+          <div class="session-time">${session.time}</div>
+          <div class="session-topic">${session.topic}</div>
+          <div class="status-row">
+            <span class="status-badge ${claim ? 'claimed-badge' : 'available'}">${claim ? 'Claimed' : 'Available'}</span>
+            ${claim ? `<div class="claimed-by">Claimed by <strong>${escapeHtml(claim.user_name)}</strong></div>` : ''}
+          </div>
+          <button class="claim-btn" ${claim ? 'disabled' : ''} data-id="${session.id}">${claim ? 'Already claimed' : 'Claim this session'}</button>
+        `;
+        sessionGrid.appendChild(card);
+      });
+
+      document.querySelectorAll('.claim-btn[data-id]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-id');
+          const session = sessions.find(s => s.id === id);
+          if (session) openModal(session);
+        });
+      });
+    }
+
+    function renderResults(claims) {
+      resultsList.innerHTML = '';
+      sessions.forEach(session => {
+        const claim = claims.find(c => c.session_id === session.id);
+        const row = document.createElement('div');
+        row.className = 'result-item';
+        row.innerHTML = claim
+          ? `<strong>${session.id}</strong> — ${escapeHtml(claim.user_name)}${claim.comment ? `<br><span class="small">Proposed topic: ${escapeHtml(claim.comment)}</span>` : ''}`
+          : `<strong>${session.id}</strong> — available`;
+        resultsList.appendChild(row);
+      });
+    }
+
+    async function refreshAll() {
+      const claims = await fetchClaims();
+      renderCards(claims);
+      renderResults(claims);
+    }
+
+    function toggleTopicField() {
+      if (proposeTopicRadio.checked) {
+        proposedTopicField.classList.remove('hidden');
+      } else {
+        proposedTopicField.classList.add('hidden');
+        claimComment.value = '';
+      }
+    }
+
+    async function submitClaim() {
+      if (!activeSession) return;
+
+      const userName = claimName.value.trim();
+      const comment = claimComment.value.trim();
+
+      if (!userName) {
+        showMessage('Please enter your name.', 'err');
+        return;
+      }
+
+      if (proposeTopicRadio.checked && !comment) {
+        showMessage('Please enter your proposed topic before submitting.', 'err');
+        return;
+      }
+
+      submitClaimBtn.disabled = true;
+      submitClaimBtn.textContent = 'Submitting...';
+
+      try {
+        const payload = {
+          action: 'claim',
+          session_id: activeSession.id,
+          user_name: userName,
+          comment: proposeTopicRadio.checked ? comment : ''
+        };
+
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+
+        if (!data.success) {
+          showMessage(data.message || 'Unable to submit your claim.', 'err');
+          submitClaimBtn.disabled = false;
+          submitClaimBtn.textContent = 'Submit';
+          return;
+        }
+
+        const claimedSessionId = activeSession.id;
+        closeModal();
+        showMessage(`${claimedSessionId} has been claimed successfully by ${userName}.`, 'ok');
+        await refreshAll();
+      } catch (err) {
+        showMessage('Unable to submit your claim. Please try again.', 'err');
+      }
+
+      submitClaimBtn.disabled = false;
+      submitClaimBtn.textContent = 'Submit';
+    }
+
+    nextStepBtn.addEventListener('click', () => {
+      if (!claimName.value.trim()) {
+        showMessage('Please enter your name before continuing.', 'err');
+        return;
+      }
+      clearMessage();
+      step1.classList.add('hidden');
+      step2.classList.remove('hidden');
+      setTimeout(() => agreeTopicRadio.focus(), 80);
+    });
+
+    backStepBtn.addEventListener('click', () => {
+      step2.classList.add('hidden');
+      step1.classList.remove('hidden');
+      setTimeout(() => claimName.focus(), 80);
+    });
+
+    agreeTopicRadio.addEventListener('change', toggleTopicField);
+    proposeTopicRadio.addEventListener('change', toggleTopicField);
+    cancelStep1.addEventListener('click', closeModal);
+    submitClaimBtn.addEventListener('click', submitClaim);
+
+    modalBackdrop.addEventListener('click', (e) => {
+      if (e.target === modalBackdrop) closeModal();
+    });
+
+    refreshAll();
+  </script>
+</body>
+</html>
